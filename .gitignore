@@ -1,0 +1,4 @@
+*.o
+*.exe
+rfid_access
+.DS_Store
