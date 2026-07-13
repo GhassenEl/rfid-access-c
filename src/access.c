@@ -202,7 +202,7 @@ AccessStatus access_update(const SensorSample *s) {
     if (g_lock_open) {
         if (s->timestamp_ms >= g_lock_until)
             g_lock_open = false;
-        else if (!g_enroll_mode)
+        else if (!g_enroll_mode && state != RFID_ENROLL && state != RFID_GRANTED)
             state = RFID_LOCK_OPEN;
     }
 
