@@ -132,7 +132,19 @@ AccessStatus access_update(const SensorSample *s) {
         score -= 50;
     }
 
-    if (!g_lockdown && state != RFID_TAMPER && !g_lock_open) {
+    /* Activer enroll après badge MASTER (même si serrure encore ouverte) */
+    if (!g_lockdown && state != RFID_TAMPER && s->enroll_btn) {
+        int last = find_card(g_last_uid);
+        if (last >= 0 && g_cards[last].role == CARD_MASTER &&
+            (s->timestamp_ms - g_last_uid_ms) < 5000) {
+            g_enroll_mode = true;
+            g_enroll_until = s->timestamp_ms + 8000;
+            state = RFID_ENROLL;
+            if (alert < ALERT_NOTIFY) alert = ALERT_NOTIFY;
+        }
+    }
+
+    if (!g_lockdown && state != RFID_TAMPER && (!g_lock_open || g_enroll_mode)) {
         if (s->card_present && s->uid[0]) {
             bool same = (strcmp(g_last_uid, s->uid) == 0) &&
                         (s->timestamp_ms - g_last_uid_ms) < 1200;
@@ -154,6 +166,8 @@ AccessStatus access_update(const SensorSample *s) {
                         alert = ALERT_NOTIFY;
                     }
                     g_enroll_mode = false;
+                } else if (g_lock_open) {
+                    /* ignorer badges pendant ouverture (sauf enroll ci-dessus) */
                 } else if (idx < 0 || !g_cards[idx].active ||
                            g_cards[idx].role == CARD_DISABLED) {
                     g_failed++;
@@ -172,7 +186,7 @@ AccessStatus access_update(const SensorSample *s) {
 
                     if (g_cards[idx].role == CARD_MASTER && s->enroll_btn) {
                         g_enroll_mode = true;
-                        g_enroll_until = s->timestamp_ms + 6000;
+                        g_enroll_until = s->timestamp_ms + 8000;
                         state = RFID_ENROLL;
                         alert = ALERT_NOTIFY;
                     } else {
@@ -181,19 +195,6 @@ AccessStatus access_update(const SensorSample *s) {
                         alert = ALERT_BEEP;
                     }
                 }
-            }
-        }
-
-        /* Master + bouton enroll dans la même fenêtre après scan master */
-        if (s->enroll_btn && matched < 0) {
-            /* si dernier badge était master récemment */
-            int last = find_card(g_last_uid);
-            if (last >= 0 && g_cards[last].role == CARD_MASTER &&
-                (s->timestamp_ms - g_last_uid_ms) < 5000) {
-                g_enroll_mode = true;
-                g_enroll_until = s->timestamp_ms + 6000;
-                state = RFID_ENROLL;
-                if (alert < ALERT_NOTIFY) alert = ALERT_NOTIFY;
             }
         }
     }

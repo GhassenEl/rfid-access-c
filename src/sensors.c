@@ -57,16 +57,16 @@ SensorSample sensors_read(uint32_t now_ms) {
     case SCENARIO_ENROLL:
         if (g_phase == 4) {
             s.card_present = true;
-            snprintf(s.uid, sizeof(s.uid), "MASTER01"); /* master */
+            snprintf(s.uid, sizeof(s.uid), "MASTER01");
         }
         if (g_phase == 6) s.enroll_btn = true;
-        if (g_phase == 14 || g_phase == 15) {
+        if (g_phase == 18 || g_phase == 19) {
             s.card_present = true;
             snprintf(s.uid, sizeof(s.uid), "NEWUSER99");
         }
-        if (g_phase == 30) {
+        if (g_phase == 40) {
             s.card_present = true;
-            snprintf(s.uid, sizeof(s.uid), "NEWUSER99"); /* test accès */
+            snprintf(s.uid, sizeof(s.uid), "NEWUSER99");
         }
         break;
     case SCENARIO_TAMPER:
